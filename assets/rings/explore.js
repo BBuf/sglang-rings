@@ -569,7 +569,7 @@
   document.querySelectorAll("[data-close]").forEach((n) => n.addEventListener("click", (e) => { if (e.target === n || e.target.closest("button[data-close]")) n.closest(".modal").hidden = true; }));
   function fitText(g, text, font, size, maxW, family) { let s = size; do { g.font = `${font} ${s}px ${family}`; if (g.measureText(text).width <= maxW) break; s -= 2; } while (s > 20); return s; }
   async function makeCard() {
-    const s = sel, S = 1500, CW = 1200, CH = 1560, CY = 350;
+    const s = sel, S = 1500, CW = 1200, CH = 1600, CY = 350;
     const SERIF = `"EB Garamond", "Noto Serif SC", Georgia, serif`, SANS = `Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif`, MONO = `"JetBrains Mono", ui-monospace, Menlo, monospace`;
     try { await Promise.all([document.fonts.load(`700 80px "EB Garamond"`), document.fonts.load(`700 30px Inter`), document.fonts.load(`400 30px Inter`), document.fonts.load(`400 30px "JetBrains Mono"`), document.fonts.load(`700 30px "Noto Serif SC"`, t("title"))]); } catch (e) { /* fall back to system fonts */ }
     const logo = $("logo");
@@ -606,7 +606,7 @@
     {   // the ring of the first commit's month, with its label on the left
       g.strokeStyle = "rgba(213,88,22,0.6)"; g.lineWidth = 3; g.beginPath(); g.arc(ringC[0], ringC[1], Math.max(4, ringR), 0, 6.2832); g.stroke();
       g.font = `700 21px ${SANS}`;
-      const txt = monthLabel(s.k), tw = g.measureText(txt).width + 22, bx = Math.max(8, ringC[0] - ringR - tw / 2), by = ringC[1];
+      const txt = monthLabel(s.k), tw = g.measureText(txt).width + 22, bx = Math.max(8, ringR < 130 ? ringC[0] - ringR - tw - 12 : ringC[0] - ringR - tw / 2), by = ringC[1];   // a small inner ring: label beside it, not on it
       g.fillStyle = "#D55816"; g.beginPath();
       if (g.roundRect) g.roundRect(bx, by - 17, tw, 34, 17); else g.rect(bx, by - 17, tw, 34);
       g.fill();
