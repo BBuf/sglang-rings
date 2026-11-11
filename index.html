@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tree Rings of SGLang</title>
+    <meta name="description" content="SGLang's git history drawn as a city: every file is a building, every month is a ring. Type your GitHub username to find the buildings you built." />
+    <meta property="og:title" content="Tree Rings of an Open-Source Project" />
+    <meta property="og:description" content="SGLang's git history drawn as a city. Type your GitHub username to find the buildings you built." />
+    <meta property="og:url" content="https://bbuf.github.io/sglang-rings/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://bbuf.github.io/sglang-rings/assets/brand/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://bbuf.github.io/sglang-rings/assets/brand/og.jpg" />
+    <link rel="canonical" href="https://bbuf.github.io/sglang-rings/" />
+    <meta name="theme-color" content="#EDE5D6" />
+    <link rel="icon" href="assets/brand/sglang-logo-square.png" />
+    <style>
+      @font-face { font-family: "Noto Serif SC"; font-weight: 200 900; font-display: swap; src: url("assets/fonts/NotoSerifSC-Subset.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url("assets/fonts/Inter-400.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 700; font-display: swap; src: url("assets/fonts/Inter-700.woff2") format("woff2"); }
+      @font-face { font-family: "EB Garamond"; font-weight: 400; font-display: swap; src: url("assets/fonts/EBGaramond-400.woff2") format("woff2"); }
+      @font-face { font-family: "EB Garamond"; font-weight: 700; font-display: swap; src: url("assets/fonts/EBGaramond-700.woff2") format("woff2"); }
+      @font-face { font-family: "JetBrains Mono"; font-weight: 400; font-display: swap; src: url("assets/fonts/JetBrainsMono-400.woff2") format("woff2"); }
+      :root { --ink: #1F1410; --mute: #7A6A5E; --paper: #F4EEE3; --panel: rgba(248, 243, 234, 0.94); --line: rgba(31, 20, 16, 0.14); --orange: #D55816; --hot: #F0570E; --amber: #C8841A; --ground: #EDE5D6;
+        --sans: Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; --serif: "EB Garamond", "Noto Serif SC", Georgia, serif; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html, body { height: 100%; overflow: hidden; background: var(--ground); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.4; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; overscroll-behavior: none; }
+      button, input { font: inherit; color: inherit; }
+      button { cursor: pointer; }
+      a { color: inherit; }
+      #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; outline: none; }
+      #cv.point { cursor: pointer; }
+      #cv.drag { cursor: grabbing; }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 8px 28px rgba(70, 45, 20, 0.09); }
+      .k { font-size: 11px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mute); }
+      body.zh .k { letter-spacing: 0.06em; font-size: 12px; }
+      .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; flex: none; margin-right: 7px; vertical-align: -1px; }
+
+      /* ---- header ---- */
+      #top { position: fixed; left: 18px; right: 18px; top: 16px; display: flex; align-items: flex-start; gap: 12px; z-index: 6; pointer-events: none; }
+      #top > * { pointer-events: auto; }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 9px 16px 9px 10px; text-decoration: none; min-height: 62px; }
+      .brand img { width: 40px; height: 40px; border-radius: 9px; display: block; }
+      .brand .ttl { font-family: var(--serif); font-weight: 700; font-size: 21px; line-height: 1.12; white-space: nowrap; }
+      body.zh .brand .ttl { font-family: "Noto Serif SC", var(--serif); font-size: 19px; letter-spacing: 0.02em; }
+      .brand .sub { margin-top: 3px; font-size: 12.5px; color: var(--mute); white-space: nowrap; }
+      #search { position: relative; width: 320px; padding: 9px 10px 10px; }
+      #search label { display: block; margin: 0 0 6px 3px; }
+      .field { display: flex; align-items: center; gap: 4px; height: 38px; padding: 0 4px 0 11px; background: rgba(255, 255, 255, 0.62); border: 1px solid var(--line); border-radius: 10px; }
+      .field:focus-within { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(213, 88, 22, 0.16); }
+      .field .at { font-family: var(--mono); color: var(--mute); font-size: 16px; }
+      #q { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: 400 16px var(--mono); }
+      #q::placeholder { color: #A99C90; font-family: var(--sans); font-size: 14px; }
+      #dice { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; display: grid; place-items: center; color: var(--mute); }
+      #dice:hover { background: rgba(31, 20, 16, 0.07); color: var(--ink); }
+      #results { margin-top: 8px; max-height: 320px; overflow: auto; }
+      .res { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 9px; border-radius: 8px; cursor: pointer; }
+      .res b { font: 400 14.5px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .res span { font-size: 12px; color: var(--mute); white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .res.on, .res:hover { background: rgba(213, 88, 22, 0.11); }
+      .none { padding: 6px 6px 2px; }
+      .none b { display: block; font-weight: 700; }
+      .none span { display: block; margin-top: 4px; font-size: 12.5px; color: var(--mute); }
+      .tools { margin-left: auto; display: flex; gap: 8px; }
+      .tools button { height: 38px; min-width: 38px; padding: 0 12px; font-weight: 700; font-size: 13px; }
+      .tools button:hover { background: #fff; }
+
+      /* ---- card ---- */
+      #card { position: fixed; right: 18px; top: 94px; width: 336px; max-height: calc(100dvh - 94px - 100px); overflow: auto; padding: 16px 18px 14px; z-index: 5; overscroll-behavior: contain; }
+      #card .x { position: absolute; right: 8px; top: 8px; width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; font-size: 20px; line-height: 1; color: var(--mute); }
+      #card .x:hover { background: rgba(31, 20, 16, 0.07); color: var(--ink); }
+      .who { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-right: 26px; }
+      .who .av { width: 52px; height: 52px; border-radius: 50%; background: #E3D9C8; flex: none; }
+      .who .login { font: 400 18px var(--mono); text-decoration: none; word-break: break-all; }
+      .who .login:hover { color: var(--orange); }
+      .rank { margin-top: 2px; font-size: 14px; }
+      .rank b { color: var(--orange); font-size: 17px; }
+      .rank span { color: var(--mute); margin-left: 4px; font-size: 12.5px; }
+      #card .row { margin-top: 5px; font-size: 13.5px; }
+      #card .row a { text-decoration: none; font-family: var(--mono); font-size: 13px; }
+      #card .row a:hover, .nav a:hover, .tall:hover span { color: var(--orange); }
+      #card .row.dead { color: var(--mute); }
+      .subj { display: block; margin-top: 5px; font-size: 13px; color: var(--mute); text-decoration: none; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .subj:hover { color: var(--orange); }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 14px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .stats b { display: block; font-size: 23px; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+      .stats b.o { color: var(--hot); }
+      .stats b.a { color: var(--amber); }
+      .stats span { display: block; margin-top: 4px; font-size: 12px; color: var(--mute); }
+      .tall { display: block; margin: 5px 0 13px; text-decoration: none; }
+      .tall span { font: 400 12.5px/1.45 var(--mono); }
+      .tall em { display: block; font-style: normal; font-size: 12.5px; color: var(--mute); }
+      .path { margin: 6px 26px 8px 0; font: 400 14px/1.45 var(--mono); }
+      .bar { display: flex; height: 9px; margin-top: 7px; border-radius: 5px; overflow: hidden; background: #E3D9C8; }
+      .bar i { display: block; height: 100%; }
+      .keys { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 7px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+      .acts { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+      .btn { height: 32px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255, 255, 255, 0.6); font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap; }
+      .btn:hover { background: #fff; border-color: rgba(31, 20, 16, 0.3); }
+      .btn.pri { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 700; }
+      .btn.pri:hover { background: #BF4D11; }
+      .link { margin-top: 12px; border: 0; background: none; font-size: 13px; color: var(--mute); }
+      .link:hover { color: var(--orange); }
+      .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mute); }
+      .nav a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 48%; }
+
+      /* ---- legend ---- */
+      #legend { position: fixed; left: 18px; bottom: 92px; padding: 12px 15px 11px; z-index: 4; font-size: 13px; max-width: 290px; }
+      #legend .k { margin-bottom: 8px; white-space: nowrap; }
+      .lg { display: flex; align-items: center; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      #legend .sep { height: 1px; background: var(--line); margin: 9px 0 7px; }
+      .tg { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+      .tg input { accent-color: var(--orange); width: 15px; height: 15px; }
+
+      /* ---- timeline ---- */
+      #bar { position: fixed; left: 18px; right: 18px; bottom: 16px; height: 62px; display: flex; align-items: center; gap: 16px; padding: 0 20px 0 14px; z-index: 5; }
+      #play { width: 38px; height: 38px; flex: none; border: 0; border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+      #play:hover { background: var(--orange); }
+      #play svg { width: 14px; height: 14px; fill: #fff; }
+      #play .pa, #play.on .pl { display: none; }
+      #play.on .pa { display: block; }
+      #tl { flex: 1; min-width: 60px; height: 22px; accent-color: var(--orange); cursor: pointer; }
+      .when { flex: none; min-width: 112px; }
+      .when b { display: block; font: 700 21px/1 var(--serif); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+      .when span { display: block; margin-top: 3px; font-size: 12px; color: var(--mute); }
+      .ctrs { display: flex; gap: 20px; flex: none; }
+      .ctrs div b { display: block; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .ctrs div span { display: block; font-size: 11.5px; color: var(--mute); white-space: nowrap; }
+
+      /* ---- labels on the scene ---- */
+      #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+      #labels > div { position: absolute; left: 0; top: 0; white-space: nowrap; will-change: transform; }
+      .yl, .ringl { padding: 2px 9px 3px; border-radius: 999px; background: rgba(250, 246, 238, 0.9); border: 1px solid var(--line); font: 700 14px var(--serif); color: var(--mute); }
+      .ringl { background: var(--orange); border-color: var(--orange); color: #fff; font: 700 12px var(--sans); font-variant-numeric: tabular-nums; }
+      .me { padding: 4px 11px 5px; border-radius: 999px; background: var(--orange); color: #fff; font: 400 13.5px var(--mono); box-shadow: 0 3px 10px rgba(120, 50, 10, 0.25); }
+      .town { text-align: center; font-family: var(--mono); font-size: 12px; color: var(--mute); line-height: 1.3; }
+      .town b { font-weight: 400; font-size: 14.5px; color: var(--ink); }
+      .town i { display: block; font-style: normal; font-family: var(--sans); font-size: 11.5px; color: var(--orange); font-weight: 700; }
+      .evl { padding: 4px 9px 5px; border-radius: 8px; background: rgba(250, 246, 238, 0.94); border: 1px solid var(--line); font-size: 12.5px; font-weight: 700; max-width: 240px; white-space: normal !important; width: max-content; line-height: 1.25; }
+      .evl i { display: block; font: 400 11px var(--mono); color: var(--orange); }
+      #tip { position: fixed; left: 0; top: 0; display: none; max-width: min(430px, calc(100vw - 16px)); padding: 8px 11px 9px; border-radius: 10px; background: rgba(31, 20, 16, 0.93); color: #F7F1E6; z-index: 9; pointer-events: none; font-size: 12.5px; }
+      #tip .p { font: 400 12.5px/1.4 var(--mono); word-break: break-all; }
+      #tip .m { margin-top: 4px; color: #D3C7B8; }
+      #tip .m i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
+      #tip .u { margin-top: 4px; font-weight: 700; }
+      #tip .u.o { color: #FF8A4A; }
+      #tip .u.a { color: #F2B95A; }
+      #tip .d { font: 400 11.5px var(--mono); color: #FF9A5E; }
+      #tip .e { font-weight: 700; font-size: 13.5px; }
+      #hint { position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(31, 20, 16, 0.78); color: #F7F1E6; font-size: 12.5px; white-space: nowrap; z-index: 3; pointer-events: none; transition: opacity 0.5s; }
+      #hint.gone { opacity: 0; }
+
+      /* ---- modals ---- */
+      .modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 18px; background: rgba(60, 45, 30, 0.42); }
+      .sheet { position: relative; width: min(620px, 100%); max-height: calc(100dvh - 36px); overflow: auto; padding: 24px 28px 22px; background: var(--paper); border-radius: 16px; box-shadow: 0 20px 60px rgba(40, 25, 10, 0.3); }
+      .sheet .x { position: absolute; right: 12px; top: 12px; width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 22px; color: var(--mute); }
+      .sheet .x:hover { background: rgba(31, 20, 16, 0.07); }
+      #about-body h2 { margin: 16px 0 6px; font: 700 20px var(--serif); }
+      body.zh #about-body h2 { font: 700 16px var(--sans); }
+      #about-body h2:first-child { margin-top: 0; }
+      #about-body p { margin-top: 8px; font-size: 14.5px; line-height: 1.62; }
+      #about-body a { color: var(--orange); }
+      #share .sheet { width: min(440px, 100%); padding: 18px 18px 16px; text-align: center; }
+      #share-img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); margin-top: 26px; }
+      #share .btn { margin-top: 12px; height: 38px; padding: 0 18px; }
+      #share p { margin-top: 9px; font-size: 12.5px; color: var(--mute); }
+      #loading { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--ground); font: 400 22px var(--serif); color: var(--mute); transition: opacity 0.6s; }
+      #loading.gone { opacity: 0; pointer-events: none; }
+
+      @media (max-width: 1180px) { .ctrs div:nth-child(n + 3) { display: none; } }
+      @media (max-width: 760px) {
+        #top { left: 10px; right: 10px; top: 10px; flex-wrap: wrap; gap: 8px; }
+        .brand { min-height: 46px; padding: 6px 12px 6px 7px; gap: 9px; min-width: 0; flex: 1 1 auto; }
+        .brand > div { min-width: 0; }
+        .brand img { width: 32px; height: 32px; border-radius: 7px; }
+        .brand .ttl { font-size: 16px; overflow: hidden; text-overflow: ellipsis; }
+        body.zh .brand .ttl { font-size: 16px; }
+        .brand .sub { display: none; }
+        .tools { gap: 6px; }
+        .tools button { height: 46px; min-width: 44px; }
+        #search { order: 3; width: 100%; padding: 7px; }
+        #search label { display: none; }
+        .field { height: 42px; }
+        #results { max-height: 38dvh; }
+        #card { left: 10px; right: 10px; top: auto; bottom: 72px; width: auto; max-height: 40dvh; padding: 13px 15px 12px; }
+        .who { margin-bottom: 10px; }
+        .who .av { width: 42px; height: 42px; }
+        .stats { margin: 11px 0; padding: 9px 0; }
+        .stats b { font-size: 20px; }
+        #legend { display: none; }
+        #hint { bottom: 76px; }
+        #bar { left: 10px; right: 10px; bottom: 10px; height: 54px; gap: 10px; padding: 0 14px 0 10px; }
+        .ctrs { display: none; }
+        .when { min-width: 96px; }
+        .when b { font-size: 18px; }
+        .sheet { padding: 20px 20px 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="cv" tabindex="-1"></canvas>
+    <div id="labels"></div>
+
+    <header id="top">
+      <a class="brand panel" href="https://github.com/sgl-project/sglang" target="_blank" rel="noopener">
+        <img id="logo" src="assets/brand/sglang-logo-square.png" alt="SGLang" />
+        <div><div class="ttl" data-i18n="title"></div><div class="sub" data-i18n="sub"></div></div>
+      </a>
+      <div id="search" class="panel">
+        <label class="k" for="q" data-i18n="searchLabel"></label>
+        <div class="field">
+          <span class="at">@</span>
+          <input id="q" type="text" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" data-i18n-ph="searchPh" />
+          <button id="dice" type="button" data-i18n-title="random">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5" /><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></svg>
+          </button>
+        </div>
+        <div id="results" role="listbox" hidden></div>
+      </div>
+      <div class="tools">
+        <button id="lang" class="panel" type="button" data-i18n="lang"></button>
+        <button id="aboutBtn" class="panel" type="button" data-i18n-title="about">?</button>
+      </div>
+    </header>
+
+    <aside id="card" class="panel" hidden></aside>
+    <div id="legend" class="panel"></div>
+    <div id="hint"></div>
+
+    <footer id="bar" class="panel">
+      <button id="play" type="button">
+        <svg class="pl" viewBox="0 0 14 14"><path d="M3 1.2v11.6L12.5 7z" /></svg>
+        <svg class="pa" viewBox="0 0 14 14"><path d="M2.5 1.5h3.2v11H2.5zM8.3 1.5h3.2v11H8.3z" /></svg>
+      </button>
+      <div class="when"><b id="r-date"></b><span id="r-day"></span></div>
+      <input id="tl" type="range" min="0" max="1000" step="1" value="1000" aria-label="Timeline" />
+      <div class="ctrs">
+        <div><b id="r-commits"></b><span data-i18n="cCommits"></span></div>
+        <div><b id="r-people"></b><span data-i18n="cPeople"></span></div>
+        <div><b id="r-files"></b><span data-i18n="cFiles"></span></div>
+        <div><b id="r-lines"></b><span data-i18n="cLines"></span></div>
+      </div>
+    </footer>
+
+    <div id="tip"></div>
+
+    <div id="about" class="modal" data-close hidden>
+      <div class="sheet"><button class="x" type="button" data-close data-i18n-title="close">×</button><div id="about-body"></div></div>
+    </div>
+    <div id="share" class="modal" data-close hidden>
+      <div class="sheet">
+        <button class="x" type="button" data-close data-i18n-title="close">×</button>
+        <img id="share-img" alt="" />
+        <a id="share-dl" class="btn pri" data-i18n="download"></a>
+        <p data-i18n="shareHint"></p>
+      </div>
+    </div>
+    <div id="loading">Building the city…</div>
+
+    <script src="assets/vendor/three.min.js?v=ccabb6c3b0"></script>
+    <script src="assets/data/rings.js?v=232d1c2505"></script>
+    <script src="assets/data/lookup.js?v=bb2959735d"></script>
+    <script src="assets/rings/city.js?v=9fe4edc51b"></script>
+    <script src="assets/rings/extras.js?v=694d642ca8"></script>
+    <script src="assets/rings/explore.js?v=3098a573c6"></script>
+  </body>
+</html>
