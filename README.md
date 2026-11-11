@@ -5,9 +5,11 @@
 The git history of [sgl-project/sglang](https://github.com/sgl-project/sglang), drawn as a city you can walk around.
 Every file is a building, and the more lines it has, the taller it stands. Each month the city grows one ring outward.
 Type a GitHub username to find the buildings that person built.
+It has sound: press play and the film's score follows the timeline, and hovering or clicking a building plays a note.
 
 把 [sgl-project/sglang](https://github.com/sgl-project/sglang) 的 git 历史画成一座可以随意看的城。
 每个文件是一栋楼，行数越多楼越高；每过一个月，城市向外长一环。输入 GitHub 用户名，就能找到这个人盖的楼。
+页面有声音：按播放键，影片的配乐会跟着时间轴走；鼠标扫过楼、点楼也会响。
 
 ## Links
 
