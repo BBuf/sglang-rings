@@ -33,7 +33,7 @@
       tipBuilt: "built by @{u}", tipTouched: "changed by @{u}", unlinked: "an account that is not linked",
       hintMouse: "Drag to rotate · scroll to zoom · right-drag to move", hintTouch: "Drag to rotate · pinch to zoom · two fingers to move",
       cCommits: "commits", cPeople: "contributors", cFiles: "files", cLines: "lines", play: "Play", pause: "Pause",
-      legend: "Roof color = area of the repo", milestones: "Milestones", lang: "中文", about: "About", close: "Close",
+      legend: "Roof color = area of the repo", milestones: "Milestones", lang: "中文", about: "About", close: "Close", sound: "Sound",
       files: "files", download: "Download image", shareHint: "On a phone, press and hold the image to save it.", cardFirst: "first building",
       cardFind: "Find your building", loading: "Building the city…", nogl: "This page needs WebGL, which this browser does not provide.",
       aboutHtml:
@@ -43,6 +43,8 @@
          <p>Type your GitHub username. A building is <b>built</b> by you when the file first appeared in one of your commits, and <b>changed</b> by you when one of your commits touched it. Co-authors count. The highlighted ring is the month of your first commit.</p>
          <h2>Data</h2>
          <p>Git history of the main branch as of ${M.d1} (${M.head.slice(0, 9)}): ${fmt(M.commits)} commits, ${fmt(M.people)} contributors. Contributors are GitHub accounts, with bots and AI accounts left out. Commits whose email is not linked to an account cannot be matched to a person.</p>
+         <h2>Sound</h2>
+         <p>Press play and the film's score follows the timeline: the plucked notes get louder when more commits land, bells mark milestones, and a low gong marks each New Year. Hovering, clicking a building and finding a contributor play the same instruments. The speaker button turns it all off.</p>
          <p>This is the interactive version of the film <a href="${FILM}" target="_blank" rel="noopener">Tree Rings of an Open-Source Project</a>. Inspired by @EianLu's film about the growth rings of a city. The page and the film are code written by Claude Fable 5.2.</p>`,
     },
     zh: {
@@ -59,7 +61,7 @@
       tipBuilt: "@{u} 盖的", tipTouched: "@{u} 改过", unlinked: "没有关联账号的作者",
       hintMouse: "拖动旋转 · 滚轮缩放 · 右键拖动平移", hintTouch: "单指旋转 · 双指缩放和平移",
       cCommits: "次提交", cPeople: "位贡献者", cFiles: "个文件", cLines: "行代码", play: "播放", pause: "暂停",
-      legend: "屋顶颜色：代码所在的分区", milestones: "大事记", lang: "EN", about: "说明", close: "关闭",
+      legend: "屋顶颜色：代码所在的分区", milestones: "大事记", lang: "EN", about: "说明", close: "关闭", sound: "声音",
       files: "个文件", download: "下载图片", shareHint: "手机上长按图片即可保存。", cardFirst: "第一栋楼",
       cardFind: "找到你的楼", loading: "正在盖城…", nogl: "这个页面需要 WebGL，当前浏览器不支持。",
       aboutHtml:
@@ -69,6 +71,8 @@
          <p>输入你的 GitHub 用户名。文件第一次出现在你的提交里，这栋楼就算你<b>盖的</b>；你的提交改动过它，就算你<b>改过</b>。co-author 也算。亮起的那一环是你第一次提交所在的月份。</p>
          <h2>数据</h2>
          <p>main 分支的 git 历史，截至 ${M.d1}（${M.head.slice(0, 9)}）：${fmt(M.commits)} 次提交，${fmt(M.people)} 位贡献者。贡献者按 GitHub 账号统计，不含机器人和 AI 账号。提交邮箱没有关联账号的，对应不到人。</p>
+         <h2>声音</h2>
+         <p>按播放键，影片的配乐会跟着时间轴走：提交越密拨弦越响，铃声是里程碑，低沉的锣声是新年。悬停、点楼、找到贡献者时响的也是同一套乐器。右上角的喇叭按钮可以全部关掉。</p>
          <p>这是影片<a href="${FILM}" target="_blank" rel="noopener">《一个开源项目的年轮》</a>的可交互版本。灵感来自 @EianLu《一座城的年轮》。页面和影片都是 Claude Fable 5.2 写的代码。</p>`,
     },
   };
@@ -395,6 +399,7 @@
     ringEl.textContent = monthLabel(sel.k);
     refresh(); renderCard(); renderLegend(); updateURL(); layout();
     if (opt.fly !== false) flyFirst();
+    if (snd.unlocked) { sfx.found(); snd.arrive = !!sel.first; }     // a run of notes now, two bells when the camera lands
   }
   function clearPerson() {
     sel = null; bsel = -1; mark.fill(0); setBand(null);
@@ -486,6 +491,133 @@
     else window.prompt("", url);
   }
 
+  // ---------- sound ----------
+  // Pressing play brings in the film's own score (its growth section), locked to the timeline. Everything else is
+  // played live on the film's instruments: pluck, bell and gong use the same formulas as work/make_bgm.py.
+  const SCORE_URL = "assets/audio/score-web.mp3", SCORE_T0 = 0.05;
+  const SCALE = [62, 64, 66, 69, 71, 74, 76, 78, 81, 83, 86];                      // D major pentatonic, two octaves
+  const ARPS = [[62, 66, 69, 74, 76], [59, 62, 66, 71, 74], [62, 67, 71, 74, 79], [64, 69, 73, 76, 81]];   // I vi IV V, as in the score
+  const ARP_PAT = [0, 2, 1, 3, 2, 4, 1, 3, 0, 2, 1, 3, 2, 4, 3, 1], ARP_VEL = [1.0, 0.45, 0.7, 0.45, 0.85, 0.45, 0.65, 0.4, 0.95, 0.45, 0.7, 0.45, 0.85, 0.5, 0.65, 0.4];
+  const snd = { on: true, unlocked: false, ctx: null, master: null, wet: null, an: null, bufs: new Map(), music: null, broken: false, hold: 0, lastPluck: 0, lastBell: 0, arrive: false, hoverKey: -1, step: 0 };
+  try { snd.on = localStorage.getItem("rings-sound") !== "off"; } catch (e) { /* private mode */ }
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12), now0 = () => performance.now();
+  function actx() {
+    if (!snd.on || !snd.unlocked) return null;                                     // browsers only allow sound after a user gesture
+    if (snd.ctx) { if (snd.ctx.state === "suspended") snd.ctx.resume(); return snd.ctx; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    const c = (snd.ctx = new AC()), sr = c.sampleRate;
+    const lim = c.createDynamicsCompressor();
+    lim.threshold.value = -10; lim.knee.value = 8; lim.ratio.value = 12; lim.attack.value = 0.003; lim.release.value = 0.25;
+    snd.master = c.createGain(); snd.master.gain.value = 0.85;
+    snd.an = c.createAnalyser(); snd.an.fftSize = 2048;
+    snd.master.connect(lim); lim.connect(c.destination); lim.connect(snd.an);
+    snd.wet = c.createGain();                                                      // plucks and bells get an echo and a reverb tail, as in the film's mix
+    const dl = c.createDelay(1), fb = c.createGain(), dg = c.createGain();
+    dl.delayTime.value = 0.452; fb.gain.value = 0.3; dg.gain.value = 0.2;
+    snd.wet.connect(snd.master); snd.wet.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(dg); dg.connect(snd.master);
+    const n = Math.floor(sr * 2.6), ir = c.createBuffer(2, n, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      let y = 0, r = 9781 + ch * 7919;
+      for (let i = 0; i < n; i++) { r = (Math.imul(r, 1664525) + 1013904223) >>> 0; y = 0.25 * ((r / 4294967296) * 2 - 1) + 0.75 * y; d[i] = i < sr * 0.012 ? 0 : y * Math.exp(-i / sr / 0.8); }
+    }
+    const conv = c.createConvolver(), rg = c.createGain();
+    conv.buffer = ir; rg.gain.value = 0.5;
+    snd.wet.connect(conv); conv.connect(rg); rg.connect(snd.master);
+    return c;
+  }
+  function tone(key, len, fn) {
+    let b = snd.bufs.get(key);
+    if (b) return b;
+    if (snd.bufs.size > 90) snd.bufs.clear();
+    const c = snd.ctx, sr = c.sampleRate, n = Math.floor(len * sr);
+    b = c.createBuffer(1, n, sr);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) { const x = i / sr; d[i] = fn(x) * Math.min(1, (len - x) / 0.04); }
+    snd.bufs.set(key, b);
+    return b;
+  }
+  function emit(buf, vel, pan, at, dry) {
+    const c = snd.ctx, src = c.createBufferSource(), g = c.createGain();
+    src.buffer = buf; g.gain.value = vel * (playing ? 0.6 : 1);                    // under the score, step back a little
+    src.connect(g);
+    let out = g;
+    if (c.createStereoPanner) { const pn = c.createStereoPanner(); pn.pan.value = pan || 0; g.connect(pn); out = pn; }
+    out.connect(dry ? snd.master : snd.wet);
+    src.start(c.currentTime + (at || 0));
+  }
+  function pluck(m, vel, o) {
+    if (!actx()) return;
+    o = o || {};
+    const br = o.bright != null ? o.bright : 1.0, dc = o.decay || 0.42, len = o.len || 1.0, w = 2 * Math.PI * hz(m);
+    emit(tone(`p${m}|${br}|${dc}|${len}`, len, (x) => (Math.sin(w * x) + 0.32 * br * Math.sin(2 * w * x) * Math.exp(-x / (dc * 0.6)) + 0.1 * br * Math.sin(3 * w * x) * Math.exp(-x / (dc * 0.35))) * Math.exp(-x / dc) * Math.min(1, x / 0.006)), vel, o.pan, o.at);
+  }
+  function bell(m, vel, o) {
+    if (!actx()) return;
+    o = o || {};
+    const dc = o.decay || 1.6, w = 2 * Math.PI * hz(m);
+    emit(tone(`b${m}|${dc}`, 4, (x) => (Math.sin(w * x) * Math.exp(-x / dc) + 0.42 * Math.sin(2.76 * w * x) * Math.exp(-x / (dc * 0.28)) + 0.2 * Math.sin(5.4 * w * x) * Math.exp(-x / (dc * 0.12)) + 0.3 * Math.sin(2 * w * x) * Math.exp(-x / (dc * 0.7))) * Math.min(1, x / 0.004)), vel, o.pan, o.at);
+  }
+  function gong(vel, at) {
+    if (!actx()) return;
+    const parts = [[73.4, 1, 2.6], [110, 0.5, 2], [146.8, 0.45, 1.7], [220, 0.2, 1.2], [293.7, 0.14, 0.9]];
+    emit(tone("gong", 5, (x) => { let v = 0; for (const [f, a, d] of parts) v += a * Math.sin(2 * Math.PI * f * x) * Math.exp(-x / d); return v * Math.min(1, x / 0.01); }), vel, 0, at, true);
+  }
+  const ringNote = (i) => SCALE[Math.min(SCALE.length - 1, Math.floor((B.k[i] / D.months.length) * SCALE.length))];   // inner (older) rings low, outer rings high
+  const sfx = {
+    hover(i) {                                   // sweeping the pointer across the city plays up and down the scale
+      const now = performance.now();
+      if (now - snd.lastPluck < 60) return;
+      snd.lastPluck = now;
+      const h = city.heights[i];
+      pluck(ringNote(i), 0.07 + 0.05 * Math.min(1, h / 9), { bright: h > 4 ? 1.4 : 0.6, pan: clamp(B.x[i] / 90, -0.6, 0.6) });
+    },
+    click(i) { const m = ringNote(i); pluck(m, 0.2, { bright: 1.4, decay: 0.7, len: 2.2 }); pluck(m + 12, 0.08, { bright: 0.6, decay: 0.5, at: 0.09 }); },
+    pin() { bell(86, 0.1, { decay: 1.2 }); },
+    found() { [62, 66, 69, 74, 78, 81, 86].forEach((m, j) => pluck(m, 0.11, { bright: 1.0, decay: 0.7, len: 2.2, at: j * 0.06, pan: -0.5 + j / 6 })); },   // the film's run of notes for the first 145 files
+    arrive() { bell(81, 0.13, { pan: -0.25 }); bell(86, 0.115, { pan: 0.25, at: 0.15 }); },                                                                  // the film's two milestone bells
+    card() { [69, 74, 81].forEach((m, j) => bell(m, 0.09, { decay: 1.2, at: j * 0.12, pan: -0.3 + 0.3 * j })); },
+    toggle() { pluck(74, 0.14); pluck(81, 0.12, { at: 0.1 }); },
+    scrub(c0, c1) {                              // dragging the timeline: the score's arpeggio by hand, with its gongs and bells where they belong
+      if (c0 === c1) return;
+      const lo = Math.min(c0, c1), hi = Math.max(c0, c1);
+      if (D.months.some((mo) => mo.year && mo.c1 != null && mo.c1 > lo && mo.c1 <= hi)) gong(0.09);
+      if (D.marks.some((mk) => mk.c > lo && mk.c <= hi) && now0() - snd.lastBell > 350) { snd.lastBell = now0(); bell(81, 0.06, { pan: -0.25 }); bell(86, 0.052, { pan: 0.25, at: 0.15 }); }
+      const now = performance.now();
+      if (now - snd.lastPluck < 45) return;
+      snd.lastPluck = now;
+      snd.step = (snd.step + (c1 > c0 ? 1 : 15)) % 16;
+      const e = Math.min(1.15, Math.log1p(hi - lo) / Math.log1p(400)), arp = ARPS[Math.floor(monthOf(Math.max(0, c1)) / 2) % 4];
+      pluck(arp[ARP_PAT[snd.step]], (0.05 + 0.06 * e) * ARP_VEL[snd.step], { bright: e > 0.75 ? 1.4 : e > 0.4 ? 1.0 : 0.6, pan: snd.step % 2 ? -0.38 : 0.38 });
+    },
+  };
+  function musicStart() {
+    if (!snd.on || snd.broken) return;
+    if (!snd.music) {
+      snd.music = new Audio();
+      snd.music.preload = "auto"; snd.music.src = SCORE_URL; snd.music.volume = 0.9;
+      snd.music.addEventListener("error", () => { snd.broken = true; });
+    }
+    try { snd.music.currentTime = SCORE_T0 + clamp(tl, 0, T_END); } catch (e) { /* not seekable yet: starts from the top */ }
+    const pr = snd.music.play();
+    if (pr && pr.catch) pr.catch(() => {});
+    snd.hold = performance.now();
+  }
+  function musicStop() { if (snd.music) snd.music.pause(); }
+  const unlock = () => { if (!snd.unlocked) { snd.unlocked = true; actx(); } };
+  for (const ev of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) window.addEventListener(ev, unlock, true);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) musicStop(); else if (playing) musicStart(); });
+  const sndBtn = $("snd");
+  sndBtn.classList.toggle("off", !snd.on);
+  sndBtn.addEventListener("click", () => {
+    snd.on = !snd.on;
+    try { localStorage.setItem("rings-sound", snd.on ? "on" : "off"); } catch (e) { /* private mode */ }
+    sndBtn.classList.toggle("off", !snd.on);
+    if (!snd.on) { musicStop(); if (snd.ctx) snd.ctx.suspend(); }
+    else { snd.unlocked = true; sfx.toggle(); if (playing) musicStart(); }
+  });
+
   // ---------- legend, readout, static text ----------
   const legend = $("legend");
   function renderLegend() {
@@ -502,13 +634,14 @@
     $("r-commits").textContent = fmt(curC + 1); $("r-people").textContent = fmt(curC < 0 ? 0 : D.ppl[c]);
     $("r-files").textContent = fmt(curC < 0 ? 0 : D.alive[c]); $("r-lines").textContent = fmt(curC < 0 ? 0 : D.lines[c]);
   }
-  function setPlaying(on) {
+  function setPlaying(on, tail) {          // tail: the timeline has reached today; let the score's last chord ring out
     playing = on;
     playBtn.classList.toggle("on", on);
     playBtn.setAttribute("aria-label", t(on ? "pause" : "play"));
+    if (on) musicStart(); else if (!tail) musicStop();
   }
   playBtn.addEventListener("click", () => { if (!playing && tl >= T_END - 0.01) { tl = 0; refresh(); } setPlaying(!playing); });
-  slider.addEventListener("input", () => { setPlaying(false); tl = (slider.value / 1000) * T_END; refresh(); });
+  slider.addEventListener("input", () => { const c0 = curC; setPlaying(false); tl = (slider.value / 1000) * T_END; refresh(); sfx.scrub(c0, curC); });
   function applyLang() {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
     document.body.classList.toggle("zh", lang === "zh");
@@ -517,7 +650,7 @@
     document.querySelectorAll("[data-i18n-title]").forEach((n) => { n.title = t(n.dataset.i18nTitle); n.setAttribute("aria-label", t(n.dataset.i18nTitle)); });
     $("about-body").innerHTML = t("aboutHtml");
     $("hint").textContent = t(COARSE ? "hintTouch" : "hintMouse");
-    labelText(); renderLegend(); renderCard(); readout(); setPlaying(playing); updateURL();
+    labelText(); renderLegend(); renderCard(); readout(); playBtn.setAttribute("aria-label", t(playing ? "pause" : "play")); updateURL();
     dirty = true;
   }
   $("lang").addEventListener("click", () => { lang = lang === "zh" ? "en" : "zh"; try { localStorage.setItem("rings-lang", lang); } catch (e) { /* private mode */ } applyLang(); layout(); });
@@ -655,13 +788,14 @@
       img.dataset.url = url; img.src = url;
       dl.href = url; dl.download = `sglang-rings-${sel.login}.png`;
       $("share").hidden = false;
+      sfx.card();
     }, "image/png");
   }
 
   // ---------- pointer input ----------
   const ptr = new Map();
   let gest = null, lastTap = 0;
-  function interact() { idle = false; fly = null; $("hint").classList.add("gone"); }
+  function interact() { idle = false; fly = null; snd.arrive = false; $("hint").classList.add("gone"); }
   cv.addEventListener("contextmenu", (e) => e.preventDefault());
   cv.addEventListener("pointerdown", (e) => {
     try { cv.setPointerCapture(e.pointerId); } catch (err) { /* synthetic events */ }
@@ -704,8 +838,8 @@
     applyCam();
     const hit = pick(e.clientX, e.clientY), now = performance.now(), dbl = now - lastTap < 320;
     lastTap = now;
-    if (hit && hit.b != null) { selectBuilding(hit.b); if (dbl) flyBuilding(hit.b); }
-    else if (hit) { showTip(tipHtml(hit), e.clientX, e.clientY); clearTimeout(tipTimer); if (e.pointerType !== "mouse") tipTimer = setTimeout(hideTip, 3200); }
+    if (hit && hit.b != null) { selectBuilding(hit.b); sfx.click(hit.b); if (dbl) flyBuilding(hit.b); }
+    else if (hit) { sfx.pin(); showTip(tipHtml(hit), e.clientX, e.clientY); clearTimeout(tipTimer); if (e.pointerType !== "mouse") tipTimer = setTimeout(hideTip, 3200); }
     else if (bsel >= 0) { bsel = -1; renderCard(); layout(); dirty = true; }
   }
   cv.addEventListener("pointerup", release);
@@ -748,17 +882,26 @@
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     if (playing) {
-      tl = Math.min(T_END, tl + dt * SPEED);
-      slider.value = Math.round((tl / T_END) * 1000);
-      refresh();
-      if (tl >= T_END) setPlaying(false);
+      const a = snd.on && !snd.broken ? snd.music : null;          // with sound on, the growth runs at the film's pace and follows the score
+      const live = !!a && !a.paused && !a.seeking && a.readyState >= 3;
+      if (!(a && !live && now - snd.hold < 2500)) {                // give the score a moment to start, so the first notes land with the first buildings
+        tl = Math.min(T_END, tl + dt * (a ? 1 : SPEED));
+        if (live) {
+          const drift = a.currentTime - SCORE_T0 - tl;
+          if (Math.abs(drift) > 0.7) { try { a.currentTime = SCORE_T0 + tl; } catch (e) { /* not seekable yet */ } }
+          else tl = clamp(tl + clamp(drift, -0.02, 0.02), 0, T_END);
+        }
+        slider.value = Math.round((tl / T_END) * 1000);
+        refresh();
+        if (tl >= T_END) setPlaying(false, true);
+      }
     }
     if (idle) { view.az += dt * 0.03; dirty = true; }
     if (fly) {
       const k = sstep5((now - fly.t0) / fly.dur), a = fly.a, b = fly.b;
       view.tx = lerp(a.tx, b.tx, k); view.ty = lerp(a.ty, b.ty, k); view.tz = lerp(a.tz, b.tz, k); view.az = lerp(a.az, b.az, k); view.el = lerp(a.el, b.el, k);
       view.dist = Math.exp(lerp(Math.log(a.dist), Math.log(b.dist), k)) * (1 + fly.hop * Math.sin(Math.PI * k));
-      if (k >= 1) fly = null;
+      if (k >= 1) { fly = null; if (snd.arrive) { snd.arrive = false; sfx.arrive(); } }
       dirty = true;
     }
     if (Math.abs(voff.x - voffT.x) > 0.5 || Math.abs(voff.y - voffT.y) > 0.5) {
@@ -771,6 +914,8 @@
       const hit = pick(hover.x, hover.y);
       if (hit) showTip(tipHtml(hit), hover.x, hover.y); else hideTip();
       cv.classList.toggle("point", !!hit);
+      const key = hit ? (hit.b != null ? hit.b : -2 - hit.ev) : -1;
+      if (key !== snd.hoverKey) { snd.hoverKey = key; if (hit && hit.b != null) sfx.hover(hit.b); else if (hit) sfx.pin(); }
     }
     if (!dirty) return;
     dirty = false;
@@ -795,5 +940,5 @@
     else renderResults();
   }
   requestAnimationFrame((now) => { frame(now); $("loading").classList.add("gone"); document.body.classList.add("ready"); });
-  window.__rings = { view, flyTo, selectPerson, clearPerson, pick, project, makeCard, logins, byLogin, B, heights: city.heights, state: () => ({ sel, bsel, tl, curC, playing }) };
+  window.__rings = { view, flyTo, selectPerson, clearPerson, pick, project, makeCard, logins, byLogin, B, heights: city.heights, snd, sfx, state: () => ({ sel, bsel, tl, curC, playing }) };
 })();
