@@ -73,6 +73,12 @@
       #snd .s-off, #snd.off .s-on { display: none; }
       #snd.off .s-off { display: block; }
       #snd.off { color: var(--mute); }
+      #snd .s-on path:nth-child(n + 2) { opacity: 0.32; }                 /* waiting for a first click: waves dimmed */
+      #snd.live { color: var(--orange); }
+      #snd.live .s-on path:nth-child(2) { animation: sndw 1.2s ease-in-out infinite; }
+      #snd.live .s-on path:nth-child(3) { animation: sndw 1.2s ease-in-out 0.25s infinite; }
+      @keyframes sndw { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { #snd.live .s-on path { animation: none !important; opacity: 1 !important; } }
 
       /* ---- card ---- */
       #card { position: fixed; right: 18px; top: 94px; width: 336px; max-height: calc(100dvh - 94px - 100px); overflow: auto; padding: 16px 18px 14px; z-index: 5; overscroll-behavior: contain; }
@@ -227,7 +233,7 @@
         <div id="results" role="listbox" hidden></div>
       </div>
       <div class="tools">
-        <button id="snd" class="panel" type="button" data-i18n-title="sound">
+        <button id="snd" class="panel" type="button">
           <svg class="s-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4z" /><path d="M15.5 9a4.2 4.2 0 0 1 0 6" /><path d="M18 6.5a7.6 7.6 0 0 1 0 11" /></svg>
           <svg class="s-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4z" /><path d="M16 9.5l5 5M21 9.5l-5 5" /></svg>
         </button>
@@ -275,6 +281,6 @@
     <script src="assets/data/lookup.js?v=bb2959735d"></script>
     <script src="assets/rings/city.js?v=9fe4edc51b"></script>
     <script src="assets/rings/extras.js?v=694d642ca8"></script>
-    <script src="assets/rings/explore.js?v=9c2b6482ff"></script>
+    <script src="assets/rings/explore.js?v=3c67f2fc54"></script>
   </body>
 </html>

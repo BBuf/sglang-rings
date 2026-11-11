@@ -33,7 +33,7 @@
       tipBuilt: "built by @{u}", tipTouched: "changed by @{u}", unlinked: "an account that is not linked",
       hintMouse: "Drag to rotate · scroll to zoom · right-drag to move", hintTouch: "Drag to rotate · pinch to zoom · two fingers to move",
       cCommits: "commits", cPeople: "contributors", cFiles: "files", cLines: "lines", play: "Play", pause: "Pause",
-      legend: "Roof color = area of the repo", milestones: "Milestones", lang: "中文", about: "About", close: "Close", sound: "Sound",
+      legend: "Roof color = area of the repo", milestones: "Milestones", lang: "中文", about: "About", close: "Close", soundOn: "Sound is on", soundOff: "Sound is off", soundWait: "Sound starts after your first click",
       files: "files", download: "Download image", shareHint: "On a phone, press and hold the image to save it.", cardFirst: "first building",
       cardFind: "Find your building", loading: "Building the city…", nogl: "This page needs WebGL, which this browser does not provide.",
       aboutHtml:
@@ -61,7 +61,7 @@
       tipBuilt: "@{u} 盖的", tipTouched: "@{u} 改过", unlinked: "没有关联账号的作者",
       hintMouse: "拖动旋转 · 滚轮缩放 · 右键拖动平移", hintTouch: "单指旋转 · 双指缩放和平移",
       cCommits: "次提交", cPeople: "位贡献者", cFiles: "个文件", cLines: "行代码", play: "播放", pause: "暂停",
-      legend: "屋顶颜色：代码所在的分区", milestones: "大事记", lang: "EN", about: "说明", close: "关闭", sound: "声音",
+      legend: "屋顶颜色：代码所在的分区", milestones: "大事记", lang: "EN", about: "说明", close: "关闭", soundOn: "声音已开", soundOff: "声音已关", soundWait: "点一下页面后开始有声音",
       files: "个文件", download: "下载图片", shareHint: "手机上长按图片即可保存。", cardFirst: "第一栋楼",
       cardFind: "找到你的楼", loading: "正在盖城…", nogl: "这个页面需要 WebGL，当前浏览器不支持。",
       aboutHtml:
@@ -498,15 +498,17 @@
   const SCALE = [62, 64, 66, 69, 71, 74, 76, 78, 81, 83, 86];                      // D major pentatonic, two octaves
   const ARPS = [[62, 66, 69, 74, 76], [59, 62, 66, 71, 74], [62, 67, 71, 74, 79], [64, 69, 73, 76, 81]];   // I vi IV V, as in the score
   const ARP_PAT = [0, 2, 1, 3, 2, 4, 1, 3, 0, 2, 1, 3, 2, 4, 3, 1], ARP_VEL = [1.0, 0.45, 0.7, 0.45, 0.85, 0.45, 0.65, 0.4, 0.95, 0.45, 0.7, 0.45, 0.85, 0.5, 0.65, 0.4];
-  const snd = { on: true, unlocked: false, ctx: null, master: null, wet: null, an: null, bufs: new Map(), music: null, broken: false, hold: 0, lastPluck: 0, lastBell: 0, arrive: false, hoverKey: -1, step: 0 };
+  const snd = { on: true, unlocked: false, ctx: null, master: null, wet: null, an: null, bufs: new Map(), music: null, broken: false, hold: 0, lastPluck: 0, lastBell: 0, arrive: false, hoverKey: -1, step: 0, count: 0, musicErr: null };
   try { snd.on = localStorage.getItem("rings-sound") !== "off"; } catch (e) { /* private mode */ }
   const hz = (m) => 440 * Math.pow(2, (m - 69) / 12), now0 = () => performance.now();
   function actx() {
     if (!snd.on || !snd.unlocked) return null;                                     // browsers only allow sound after a user gesture
-    if (snd.ctx) { if (snd.ctx.state === "suspended") snd.ctx.resume(); return snd.ctx; }
+    if (snd.ctx) { if (snd.ctx.state !== "running") { const pr = snd.ctx.resume(); if (pr && pr.catch) pr.catch(() => {}); } return snd.ctx; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     const c = (snd.ctx = new AC()), sr = c.sampleRate;
+    c.onstatechange = sndPaint;
+    if (c.state !== "running") { const pr = c.resume(); if (pr && pr.catch) pr.catch(() => {}); }
     const lim = c.createDynamicsCompressor();
     lim.threshold.value = -10; lim.knee.value = 8; lim.ratio.value = 12; lim.attack.value = 0.003; lim.release.value = 0.25;
     snd.master = c.createGain(); snd.master.gain.value = 0.85;
@@ -541,6 +543,7 @@
   function emit(buf, vel, pan, at, dry) {
     const c = snd.ctx, src = c.createBufferSource(), g = c.createGain();
     src.buffer = buf; g.gain.value = vel * (playing ? 0.6 : 1);                    // under the score, step back a little
+    snd.count++;
     src.connect(g);
     let out = g;
     if (c.createStereoPanner) { const pn = c.createStereoPanner(); pn.pan.value = pan || 0; g.connect(pn); out = pn; }
@@ -597,26 +600,52 @@
     if (!snd.music) {
       snd.music = new Audio();
       snd.music.preload = "auto"; snd.music.src = SCORE_URL; snd.music.volume = 0.9;
-      snd.music.addEventListener("error", () => { snd.broken = true; });
+      snd.music.addEventListener("error", () => { snd.broken = true; snd.musicErr = "load " + (snd.music.error ? snd.music.error.code : "?"); sndPaint(); });
+      for (const ev of ["playing", "pause", "ended"]) snd.music.addEventListener(ev, sndPaint);
     }
     try { snd.music.currentTime = SCORE_T0 + clamp(tl, 0, T_END); } catch (e) { /* not seekable yet: starts from the top */ }
     const pr = snd.music.play();
-    if (pr && pr.catch) pr.catch(() => {});
+    if (pr && pr.then) pr.then(() => { snd.musicErr = null; }, (e) => { snd.musicErr = (e && e.name) || "play failed"; sndPaint(); });   // a blocked start is tried again on the next gesture
     snd.hold = performance.now();
   }
   function musicStop() { if (snd.music) snd.music.pause(); }
-  const unlock = () => { if (!snd.unlocked) { snd.unlocked = true; actx(); } };
-  for (const ev of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) window.addEventListener(ev, unlock, true);
+  // Every gesture, not only the first: a context that a browser left suspended, or a score it refused to start, gets another go.
+  const unlock = () => { snd.unlocked = true; actx(); if (playing && snd.on && snd.music && snd.music.paused && snd.musicErr) musicStart(); sndPaint(); };
+  for (const ev of ["pointerdown", "mousedown", "pointerup", "mouseup", "touchend", "click", "keydown"]) window.addEventListener(ev, unlock, true);
   document.addEventListener("visibilitychange", () => { if (document.hidden) musicStop(); else if (playing) musicStart(); });
   const sndBtn = $("snd");
-  sndBtn.classList.toggle("off", !snd.on);
+  function sndPaint() {          // the speaker shows what the page is doing: off, waiting for a first click, or live (waves moving)
+    const live = snd.on && ((snd.ctx && snd.ctx.state === "running") || (snd.music && !snd.music.paused));
+    sndBtn.classList.toggle("off", !snd.on);
+    sndBtn.classList.toggle("live", !!live);
+    const tip = t(!snd.on ? "soundOff" : live ? "soundOn" : "soundWait");
+    sndBtn.title = tip; sndBtn.setAttribute("aria-label", tip);
+  }
   sndBtn.addEventListener("click", () => {
     snd.on = !snd.on;
     try { localStorage.setItem("rings-sound", snd.on ? "on" : "off"); } catch (e) { /* private mode */ }
-    sndBtn.classList.toggle("off", !snd.on);
     if (!snd.on) { musicStop(); if (snd.ctx) snd.ctx.suspend(); }
     else { snd.unlocked = true; sfx.toggle(); if (playing) musicStart(); }
+    sndPaint();
   });
+  if (qs.get("debug") === "sound") {      // ?debug=sound: what the page thinks it is playing, for when nothing is heard
+    const box = document.createElement("pre");
+    box.style.cssText = "position:fixed;left:12px;top:100px;z-index:50;margin:0;padding:10px 12px;border-radius:10px;background:rgba(31,20,16,.9);color:#F7F1E6;font:12px/1.5 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre";
+    document.body.appendChild(box);
+    const build = (Array.from(document.scripts).map((x) => x.src).find((x) => /explore\.js/.test(x)) || "").split("v=")[1] || "dev";
+    setInterval(() => {
+      const a = snd.music, c = snd.ctx;
+      box.textContent = [
+        "build      " + build,
+        "sound      " + (snd.on ? "on" : "off") + "   gesture seen: " + (snd.unlocked ? "yes" : "no"),
+        "engine     " + (c ? c.state + "  " + c.sampleRate + " Hz  t=" + c.currentTime.toFixed(1) + " s" : "not started"),
+        "notes sent " + snd.count,
+        "score      " + (a ? (a.paused ? "paused" : "playing") + "  t=" + a.currentTime.toFixed(1) + " s  ready=" + a.readyState + (a.error ? "  error " + a.error.code : "") : "not loaded") + (snd.musicErr ? "  [" + snd.musicErr + "]" : ""),
+        "timeline   " + (playing ? "playing" : "stopped") + "  t=" + tl.toFixed(1) + " s",
+        navigator.userAgent.replace(/^.*?\) /, "").slice(0, 60),
+      ].join("\n");
+    }, 300);
+  }
 
   // ---------- legend, readout, static text ----------
   const legend = $("legend");
@@ -650,7 +679,7 @@
     document.querySelectorAll("[data-i18n-title]").forEach((n) => { n.title = t(n.dataset.i18nTitle); n.setAttribute("aria-label", t(n.dataset.i18nTitle)); });
     $("about-body").innerHTML = t("aboutHtml");
     $("hint").textContent = t(COARSE ? "hintTouch" : "hintMouse");
-    labelText(); renderLegend(); renderCard(); readout(); playBtn.setAttribute("aria-label", t(playing ? "pause" : "play")); updateURL();
+    labelText(); renderLegend(); renderCard(); readout(); playBtn.setAttribute("aria-label", t(playing ? "pause" : "play")); updateURL(); sndPaint();
     dirty = true;
   }
   $("lang").addEventListener("click", () => { lang = lang === "zh" ? "en" : "zh"; try { localStorage.setItem("rings-lang", lang); } catch (e) { /* private mode */ } applyLang(); layout(); });
