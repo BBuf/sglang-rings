@@ -47,6 +47,7 @@
       .brand img { width: 40px; height: 40px; border-radius: 9px; display: block; }
       .brand .ttl { font-family: var(--serif); font-weight: 700; font-size: 21px; line-height: 1.12; white-space: nowrap; }
       body.zh .brand .ttl { font-family: "Noto Serif SC", var(--serif); font-size: 19px; letter-spacing: 0.02em; }
+      .brand .ttl .short { display: none; }
       .brand .sub { margin-top: 3px; font-size: 12.5px; color: var(--mute); white-space: nowrap; }
       #search { position: relative; width: 320px; padding: 9px 10px 10px; }
       #search label { display: block; margin: 0 0 6px 3px; }
@@ -97,11 +98,11 @@
       #card .row.dead { color: var(--mute); }
       .subj { display: block; margin-top: 5px; font-size: 13px; color: var(--mute); text-decoration: none; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
       .subj:hover { color: var(--orange); }
-      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 14px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .stats { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 10px; margin: 14px 0 14px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
       .stats b { display: block; font-size: 23px; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
       .stats b.o { color: var(--hot); }
       .stats b.a { color: var(--amber); }
-      .stats span { display: block; margin-top: 4px; font-size: 12px; color: var(--mute); }
+      .stats span { display: block; margin-top: 4px; font-size: 12px; color: var(--mute); white-space: nowrap; }
       .tall { display: block; margin: 5px 0 13px; text-decoration: none; }
       .tall span { font: 400 12.5px/1.45 var(--mono); }
       .tall em { display: block; font-style: normal; font-size: 12.5px; color: var(--mute); }
@@ -110,10 +111,20 @@
       .bar i { display: block; height: 100%; }
       .keys { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 7px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
       .acts { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
-      .btn { height: 32px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255, 255, 255, 0.6); font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap; }
+      .acts.three { display: grid; grid-template-columns: repeat(3, 1fr); }
+      .btn { height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, 0.6); font-size: 13.5px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; min-width: 0; }
+      .btn span { overflow: hidden; text-overflow: ellipsis; }
+      .btn svg { width: 17px; height: 17px; flex: none; }
       .btn:hover { background: #fff; border-color: rgba(31, 20, 16, 0.3); }
-      .btn.pri { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 700; }
-      .btn.pri:hover { background: #BF4D11; }
+      .btn.pri { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(213, 88, 22, 0.28); }
+      .btn.pri:hover { background: #BF4D11; border-color: #BF4D11; }
+      .btn.line { border: 1.5px solid var(--orange); color: var(--orange); font-weight: 700; background: rgba(255, 255, 255, 0.75); }
+      .btn.line:hover { background: #fff; border-color: #BF4D11; color: #BF4D11; }
+      .btn.ok { border-color: #4E8F5B; color: #2F7A40; }
+      .btn.big { height: 44px; padding: 0 16px; font-size: 15px; border-radius: 12px; }
+      .btn.big svg { width: 19px; height: 19px; }
+      .share { display: flex; gap: 8px; margin: 0 0 14px; }                     /* save and share: the two things people come here to do */
+      .share .btn { flex: 1 1 0; }
       .link { margin-top: 12px; border: 0; background: none; font-size: 13px; color: var(--mute); }
       .link:hover { color: var(--orange); }
       .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mute); }
@@ -177,38 +188,61 @@
       #about-body a { color: var(--orange); }
       #share .sheet { width: min(440px, 100%); padding: 18px 18px 16px; text-align: center; }
       #share-img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); margin-top: 26px; }
-      #share .btn { margin-top: 12px; height: 38px; padding: 0 18px; }
+      .share-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .share-acts .btn { flex: 1 1 auto; }
       #share p { margin-top: 9px; font-size: 12.5px; color: var(--mute); }
       #loading { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--ground); font: 400 22px var(--serif); color: var(--mute); transition: opacity 0.6s; }
       #loading.gone { opacity: 0; pointer-events: none; }
 
       @media (max-width: 1180px) { .ctrs div:nth-child(n + 3) { display: none; } }
       @media (max-width: 760px) {
-        #top { left: 10px; right: 10px; top: 10px; flex-wrap: wrap; gap: 8px; }
-        .brand { min-height: 46px; padding: 6px 12px 6px 7px; gap: 9px; min-width: 0; flex: 1 1 auto; }
+        /* header in two rows: logo, short title and the three tools; then the search field */
+        #top { left: 10px; right: 10px; top: calc(8px + env(safe-area-inset-top)); flex-wrap: wrap; gap: 8px; }
+        .brand { min-height: 44px; padding: 5px 12px 5px 6px; gap: 8px; min-width: 0; flex: 1 1 0; }
         .brand > div { min-width: 0; }
         .brand img { width: 32px; height: 32px; border-radius: 7px; }
-        .brand .ttl { font-size: 16px; overflow: hidden; text-overflow: ellipsis; }
-        body.zh .brand .ttl { font-size: 16px; }
+        .brand .ttl, body.zh .brand .ttl { font-size: 16px; overflow: hidden; text-overflow: ellipsis; }
+        .brand .ttl .long { display: none; }
+        .brand .ttl .short { display: inline; }
         .brand .sub { display: none; }
-        .tools { gap: 6px; }
-        .tools button { height: 46px; min-width: 44px; }
-        #search { order: 3; width: 100%; padding: 7px; }
+        .tools { gap: 6px; flex: none; }
+        .tools button { height: 44px; min-width: 42px; padding: 0 10px; }
+        #search { order: 3; flex: 1 1 100%; width: auto; padding: 6px; }
         #search label { display: none; }
-        .field { height: 42px; }
+        .field { height: 44px; }
+        #dice { width: 38px; height: 38px; }
         #results { max-height: 38dvh; }
-        #card { left: 10px; right: 10px; top: auto; bottom: 72px; width: auto; max-height: 40dvh; padding: 13px 15px 12px; }
-        .who { margin-bottom: 10px; }
-        .who .av { width: 42px; height: 42px; }
+        .res { padding: 11px 9px; }
+        /* bottom sheet: name, the two big buttons, first commit and the three numbers show without scrolling */
+        #card { left: 10px; right: 10px; top: auto; bottom: calc(74px + env(safe-area-inset-bottom)); width: auto; max-height: 43dvh; padding: 13px 14px 12px; }
+        #card .x { width: 40px; height: 40px; right: 4px; top: 4px; font-size: 24px; }
+        .who { margin-bottom: 11px; padding-right: 34px; }
+        .who .av { width: 44px; height: 44px; }
+        .share { margin-bottom: 12px; }
+        .btn { height: 44px; font-size: 14.5px; padding: 0 10px; }
+        .btn.big { height: 48px; font-size: 16px; }
         .stats { margin: 11px 0; padding: 9px 0; }
-        .stats b { font-size: 20px; }
+        .stats b { font-size: 21px; }
+        .nav { font-size: 13px; padding: 13px 0 3px; }
+        .link { font-size: 14.5px; padding: 8px 0; }
         #legend { display: none; }
-        #hint { bottom: 76px; }
-        #bar { left: 10px; right: 10px; bottom: 10px; height: 54px; gap: 10px; padding: 0 14px 0 10px; }
+        #hint { left: 12px; right: 12px; width: fit-content; max-width: calc(100vw - 24px); margin: 0 auto; transform: none; bottom: calc(78px + env(safe-area-inset-bottom)); font-size: 12px; padding: 6px 12px; text-align: center; }
+        #bar { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); height: 56px; gap: 10px; padding: 0 14px 0 8px; }
+        #play { width: 44px; height: 44px; }
         .ctrs { display: none; }
         .when { min-width: 96px; }
         .when b { font-size: 18px; }
-        .sheet { padding: 20px 20px 18px; }
+        .sheet { padding: 20px 16px 16px; }
+        .sheet .x { width: 40px; height: 40px; right: 6px; top: 6px; }
+        #share .sheet { padding: 14px 14px 14px; }
+        #share-img { margin-top: 34px; max-height: 58dvh; width: auto; max-width: 100%; margin-left: auto; margin-right: auto; }
+      }
+      @media (max-width: 380px) {      /* small phones: keep the whole short title on one line */
+        .brand { padding: 5px 8px 5px 6px; gap: 6px; }
+        .brand img { width: 30px; height: 30px; }
+        .brand .ttl, body.zh .brand .ttl { font-size: 14.5px; }
+        .tools { gap: 5px; }
+        .tools button { min-width: 40px; padding: 0 8px; }
       }
     </style>
   </head>
@@ -219,7 +253,7 @@
     <header id="top">
       <a class="brand panel" href="https://github.com/sgl-project/sglang" target="_blank" rel="noopener">
         <img id="logo" src="assets/brand/sglang-logo-square.png" alt="SGLang" />
-        <div><div class="ttl" data-i18n="title"></div><div class="sub" data-i18n="sub"></div></div>
+        <div><div class="ttl"><span class="long" data-i18n="title"></span><span class="short" data-i18n="docTitle"></span></div><div class="sub" data-i18n="sub"></div></div>
       </a>
       <div id="search" class="panel">
         <label class="k" for="q" data-i18n="searchLabel"></label>
@@ -270,7 +304,11 @@
       <div class="sheet">
         <button class="x" type="button" data-close data-i18n-title="close">×</button>
         <img id="share-img" alt="" />
-        <a id="share-dl" class="btn pri" data-i18n="download"></a>
+        <div class="share-acts">
+          <a id="share-dl" class="btn big pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5" /><path d="M5 19.5h14" /></svg><span data-i18n="download"></span></a>
+          <button id="share-native" class="btn big line" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4m0 0L8 8m4-4l4 4" /><path d="M6 12v7.5h12V12" /></svg><span data-i18n="shareImage"></span></button>
+          <button id="share-copy" class="btn big line" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.5-2.5a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.5 2.5a4 4 0 0 0 5.7 5.7l1-1" /></svg><span data-i18n="aCopy"></span></button>
+        </div>
         <p data-i18n="shareHint"></p>
       </div>
     </div>
@@ -281,6 +319,6 @@
     <script src="assets/data/lookup.js?v=bb2959735d"></script>
     <script src="assets/rings/city.js?v=9fe4edc51b"></script>
     <script src="assets/rings/extras.js?v=694d642ca8"></script>
-    <script src="assets/rings/explore.js?v=3c67f2fc54"></script>
+    <script src="assets/rings/explore.js?v=ac03eebf46"></script>
   </body>
 </html>

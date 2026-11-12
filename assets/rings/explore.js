@@ -27,7 +27,8 @@
       rank: "Contributor", of: "of {n}", firstCommit: "First commit", day: "Day {n}", ring: "{m} ring", seed: "the first commit of the repo",
       sCommits: "commits", sBuilt: "buildings built", sTouched: "buildings changed", builtKey: "built by @{u}", touchedKey: "changed by @{u}",
       tallest: "Tallest building you built", lines: "lines", where: "Where your buildings are",
-      aFirst: "First building", aAll: "Whole city", aReplay: "Replay from first commit", aCopy: "Copy link", copied: "Copied", aSave: "Save card",
+      aFirst: "First building", aAll: "Whole city", aReplay: "Replay", aReplayTip: "Replay from your first commit", aCopy: "Copy link", copied: "Copied", aSave: "Save card", aShare: "Share",
+      shareImage: "Share image", shareText: "@{u} is contributor #{n} to SGLang. Find your building:",
       building: "Building", builtOn: "built {d}", by: "by", removed: "removed {d}", ruin: "Removed on {d}. Only the foundation is left.",
       changedBy: "Changed by {p} contributors in {c} commits", open: "Open on GitHub", birth: "Commit that built it", back: "Back to @{u}",
       tipBuilt: "built by @{u}", tipTouched: "changed by @{u}", unlinked: "an account that is not linked",
@@ -55,7 +56,8 @@
       rank: "第 {n} 位贡献者", of: "共 {n} 位", firstCommit: "第一次提交", day: "第 {n} 天", ring: "{m} 这一环", seed: "仓库的第一次提交",
       sCommits: "次提交", sBuilt: "栋楼是你盖的", sTouched: "栋楼你改过", builtKey: "@{u} 盖的", touchedKey: "@{u} 改过的",
       tallest: "你盖的最高的楼", lines: "行", where: "你的楼在哪些分区",
-      aFirst: "第一栋楼", aAll: "看全城", aReplay: "从第一次提交重放", aCopy: "复制链接", copied: "已复制", aSave: "保存卡片",
+      aFirst: "第一栋楼", aAll: "看全城", aReplay: "重放", aReplayTip: "从你的第一次提交开始重放", aCopy: "复制链接", copied: "已复制", aSave: "保存卡片", aShare: "分享",
+      shareImage: "分享图片", shareText: "@{u} 是 SGLang 的第 {n} 位贡献者，来找你的楼：",
       building: "这栋楼", builtOn: "{d} 盖起", by: "盖楼的人", removed: "{d} 已删除", ruin: "{d} 被删除，只剩地基。",
       changedBy: "{p} 位贡献者在 {c} 次提交里改过它", open: "在 GitHub 上打开", birth: "盖起它的那次提交", back: "回到 @{u}",
       tipBuilt: "@{u} 盖的", tipTouched: "@{u} 改过", unlinked: "没有关联账号的作者",
@@ -421,6 +423,13 @@
   }
 
   // ---------- card ----------
+  const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const ICON = {
+    save: svg('<path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5" /><path d="M5 19.5h14" />'),
+    share: svg('<path d="M12 15V4m0 0L8 8m4-4l4 4" /><path d="M6 12v7.5h12V12" />'),
+    link: svg('<path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.5-2.5a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.5 2.5a4 4 0 0 0 5.7 5.7l1-1" />'),
+  };
+  const CAN_SHARE = typeof navigator.share === "function";       // phones mostly; desktop Chrome on macOS has none, so the button copies the link there
   const card = $("card");
   const who = (pi) => `<a href="#" data-act="person" data-pi="${pi}">@${esc(logins[pi])}</a>`;
   function renderCard() {
@@ -455,6 +464,7 @@
        <div class="who"><img class="av" src="https://github.com/${encodeURIComponent(s.login)}.png?size=120" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'" />
          <div><a class="login" href="https://github.com/${encodeURIComponent(s.login)}" target="_blank" rel="noopener">@${esc(s.login)}</a>
          <div class="rank">${lang === "zh" ? t("rank", { n: `<b>${fmt(s.pi + 1)}</b>` }) : `${t("rank")} <b>#${fmt(s.pi + 1)}</b>`} <span>${t("of", { n: fmt(NP) })}</span></div></div></div>
+       <div class="share"><button class="btn big pri" data-act="save">${ICON.save}<span>${t("aSave")}</span></button><button class="btn big line" data-act="share">${CAN_SHARE ? ICON.share : ICON.link}<span>${t(CAN_SHARE ? "aShare" : "aCopy")}</span></button></div>
        <div class="k">${t("firstCommit")}</div>
        <div class="row">${when}</div>
        <a class="subj" href="${REPO}/commit/${hashOf(ci)}" target="_blank" rel="noopener">${esc(X.subj[s.pi])}</a>
@@ -463,8 +473,7 @@
        <div class="k">${t("where")}</div>
        <div class="bar">${top.map(([n, i]) => `<i style="width:${((n / tot) * 100).toFixed(2)}%;background:${D.modules[i].color}"></i>`).join("")}</div>
        <div class="keys">${top.slice(0, 4).map(([n, i]) => `<span><i class="sw" style="background:${D.modules[i].color}"></i>${esc(modName(i))} ${fmt(n)}</span>`).join("")}</div>
-       <div class="acts"><button class="btn pri" data-act="first">${t("aFirst")}</button><button class="btn" data-act="all">${t("aAll")}</button><button class="btn" data-act="replay">${t("aReplay")}</button></div>
-       <div class="acts"><button class="btn" data-act="copy">${t("aCopy")}</button><button class="btn" data-act="save">${t("aSave")}</button></div>
+       <div class="acts three"><button class="btn" data-act="first">${t("aFirst")}</button><button class="btn" data-act="all">${t("aAll")}</button><button class="btn" data-act="replay" title="${t("aReplayTip")}">${t("aReplay")}</button></div>
        <div class="nav">${prev >= 0 ? `<a href="#" data-act="person" data-pi="${prev}">← #${fmt(prev + 1)} @${esc(logins[prev])}</a>` : "<span></span>"}${next >= 0 ? `<a href="#" data-act="person" data-pi="${next}">#${fmt(next + 1)} @${esc(logins[next])} →</a>` : "<span></span>"}</div>`;
     card.hidden = false;
     card.scrollTop = 0;
@@ -481,11 +490,16 @@
     else if (act === "first") flyFirst();
     else if (act === "all") flyAll();
     else if (act === "replay") { tl = Math.max(0, vtc[sel.ci0] - 2.5); refresh(); setPlaying(true); }
-    else if (act === "copy") copyLink(n);
+    else if (act === "share") shareLink(n);
     else if (act === "save") openShare();
   });
+  function shareLink(btn) {      // the system share sheet where there is one, otherwise the link goes to the clipboard
+    if (!CAN_SHARE || !sel) return copyLink(btn);
+    navigator.share({ title: document.title, text: t("shareText", { u: sel.login, n: fmt(sel.pi + 1) }), url: location.href }).catch((e) => { if (!e || e.name !== "AbortError") copyLink(btn); });
+  }
   function copyLink(btn) {
-    const done = () => { const old = btn.textContent; btn.textContent = t("copied"); setTimeout(() => { btn.textContent = old; }, 1400); };
+    const lab = btn.querySelector("span") || btn;
+    const done = () => { const old = lab.textContent; lab.textContent = t("copied"); btn.classList.add("ok"); setTimeout(() => { lab.textContent = old; btn.classList.remove("ok"); }, 1400); };
     const url = location.href;
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => window.prompt("", url));
     else window.prompt("", url);
@@ -808,6 +822,12 @@
     g.fillText(lang === "zh" ? `${fmt(Math.floor(DAYS) + 1)} 天 · ${fmt(M.commits)} 次提交` : `${fmt(Math.floor(DAYS) + 1)} days · ${fmt(M.commits)} commits`, CW - 64, CH - 40);
     return cnv;
   }
+  let shareFile = null;
+  $("share-native").addEventListener("click", () => {
+    if (!shareFile || !sel) return;
+    navigator.share({ files: [shareFile], title: document.title, text: t("shareText", { u: sel.login, n: fmt(sel.pi + 1) }) + " " + location.href }).catch(() => {});
+  });
+  $("share-copy").addEventListener("click", (e) => copyLink(e.currentTarget));
   async function openShare() {
     if (!sel) return;
     const cnv = await makeCard();
@@ -816,6 +836,10 @@
       if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
       img.dataset.url = url; img.src = url;
       dl.href = url; dl.download = `sglang-rings-${sel.login}.png`;
+      let file = null;
+      try { file = new File([blob], `sglang-rings-${sel.login}.png`, { type: "image/png" }); } catch (e) { /* old browsers */ }
+      shareFile = file && navigator.canShare && navigator.canShare({ files: [file] }) ? file : null;
+      $("share-native").hidden = !shareFile;
       $("share").hidden = false;
       sfx.card();
     }, "image/png");
@@ -956,8 +980,8 @@
 
   // ---------- start ----------
   resize();
-  if (narrow()) view.el = 0.95;
-  view.dist = fitDist(M.radius + 6, view.el) * (narrow() ? 0.92 : 1.0);
+  if (narrow()) view.el = 1.02;
+  view.dist = fitDist(M.radius + 6, view.el) * (narrow() ? 0.86 : 1.0);
   applyLang();
   refresh();
   applyCam();
